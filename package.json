@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "webpack-dev-server --host 0.0.0.0 --port 1234 --mode development ",
-    "build": "webpack --mode production"
+    "build": "NODE_ENV=production webpack --mode production"
   },
   "dependencies": {
     "deck.gl": "^7.2.3",
