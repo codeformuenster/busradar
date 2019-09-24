@@ -1,14 +1,12 @@
-
-import React, { useState, useEffect } from 'react'
-import Map from './Map'
-
+import React, { useState, useEffect } from "react";
+import Map from "./Map";
 
 const App = () => {
+  return (
+    <div>
+      <Map />
+    </div>
+  );
+};
 
-    return (
-        <div><Map /></div>
-
-    )
-}
-
-export default App
+export default App;
