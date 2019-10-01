@@ -34,42 +34,73 @@ const linienFarben = {
 };
 const Map = () => {
   useEffect(() => {
-    const interval = setInterval(() => {
-      fetch("https://rest.busradar.conterra.de/prod/fahrzeuge")
-        .then(response => {
-          if (response.ok) return response.json();
-          else throw new Error("Could not fetch conterra API");
-        })
-        .then(json => {
-          setPointLayer(
-            new GeoJsonLayer({
-              id: "geojson-layer",
-              data: json,
-              pickable: true,
-              stroked: false,
-              filled: true,
-              getFillColor: d => linienFarben[d.properties.linientext],
-              pointRadiusScale: 5,
-              pointRadiusMinPixels: 5,
-              onHover: info =>
-                setHoverEvent({
-                  hoveredObject: info.object,
-                  pointerX: info.x,
-                  pointerY: info.y
-                })
-            })
-          );
-        })
-        .catch(err => {
-          throw new Error("Could not fetch conterra API");
-        });
-    }, 3000);
-    return () => clearInterval(interval);
+    var connection = new WebSocket("wss://websocket.busradar.conterra.de/prod");
+
+    // When the connection is open, send some data to the server
+    connection.onopen = () => {
+      console.log("Connection to WebSocket established");
+    };
+
+    // Log errors
+    connection.onerror = error => {
+      console.log("WebSocket Error ", error);
+    };
+
+    // Log messages from the server
+    connection.onmessage = e => {
+      const data = JSON.parse(e.data);
+      _processNewehicles(data);
+    };
+    return () => connection.close();
   }, []);
 
   const [pointLayer, setPointLayer] = useState(new GeoJsonLayer());
 
   const [hoverEvent, setHoverEvent] = useState();
+
+  const [vehicles, setVehicles] = useState();
+
+  const _processNewehicles = data => {
+    console.log(data);
+    data.features.forEach(bus => {
+      // remove vehicles with REMOVE operation
+      if (bus.properties.operation === "REMOVE") {
+        setVehicles(
+          vehicles.filter(
+            oldBus =>
+              oldBus.properties.fahrtbezeichner !=
+              bus.properties.fahrtbezeichner
+          )
+        );
+        return;
+      }
+    });
+
+    // add new vehicles
+
+    // update vehicles
+
+    // set point layer
+
+    setPointLayer(
+      new GeoJsonLayer({
+        id: "geojson-layer",
+        data: data,
+        pickable: true,
+        stroked: false,
+        filled: true,
+        getFillColor: d => linienFarben[d.properties.linientext],
+        pointRadiusScale: 5,
+        pointRadiusMinPixels: 5,
+        onHover: info =>
+          setHoverEvent({
+            hoveredObject: info.object,
+            pointerX: info.x,
+            pointerY: info.y
+          })
+      })
+    );
+  };
 
   const _renderTooltip = () => {
     const { hoveredObject, pointerX, pointerY } = hoverEvent || {};
